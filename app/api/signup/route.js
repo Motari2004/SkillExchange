@@ -1,32 +1,26 @@
-import { PrismaClient } from '@prisma/client'; // Or your chosen database ORM
-import bcrypt from 'bcryptjs';
+import prisma from "@/lib/prisma"
+import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient();
-
-export async function POST(req) {
+export async function POST(req, res) {
   try {
-    const { firstName, lastName, email, password, userType } = await req.json();
+    const { firstName, lastName, email, password, userType } = await req.json()
 
-    // Hash the password for security
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the password
+    const hashedPassword = bcrypt.hashSync(password, 10)
 
-    // Save user to the database
+    // Create the user
     const newUser = await prisma.user.create({
       data: {
         firstName,
         lastName,
         email,
-        password: hashedPassword, // Store the hashed password
+        password: hashedPassword,
         userType,
       },
-    });
+    })
 
-    return new Response(JSON.stringify({ message: "User created successfully", user: newUser }), {
-      status: 201,
-    });
+    return res.status(200).json(newUser)
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Error creating user" }), {
-      status: 500,
-    });
+    return res.status(500).json({ error: error.message })
   }
 }
